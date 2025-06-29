@@ -70,7 +70,7 @@ impl LevelSystem {
 		if exp < 100 {
 			1
 		} else {
-			2 + (((exp as f64 / 2.0).sqrt().floor()) as u16 + 1) as u16 // Sistema para subir de nivel en base a la experiencia, mientras mas experiencia mas alto el nivel
+			1 + (((exp as f64 / 2.0).sqrt().floor()) as u16 + 1) as u16 // Sistema para subir de nivel en base a la experiencia, mientras mas experiencia mas alto el nivel
 		}
 	}
 }
@@ -156,9 +156,6 @@ struct PurchaseResult {
 }
 
 
- /*
- * Estructura para la tienda de EduGame
- */
 
 type StudentStorage = Arc<RwLock<HashMap<String, Student>>>; 
 /* El hashmap que guarda los estudiantes, y se comparte entre todas las peticiones, supuestamente thread-safe https://doc.rust-lang.org/std/sync/struct.Arc.html
@@ -312,7 +309,7 @@ async fn scrape_ucampus(username: String, password: String) -> Result<Student, B
 		.await?;
 
 	/*
-	 * Extraigo las coockies que dan para usar posterior en las otras peticiones que almacenan una sola sesion
+	 * Extraigo las cookies que en las otras peticiones almacenan la sesion
  	 */
 
 	let cookies = cookie_monster.cookies().collect::<Vec<_>>();
@@ -876,7 +873,7 @@ fn index() -> RawHtml<&'static str> {
 						<div class="grade-section">
 							<h3>Rendimiento academico</h3>
 							<div class="grade-item">Puntos totales por notas: ${data.grades}</div>
-							<div class="grade-item">Notas promedio [Electivo y habilidades]: ${data.mean.toFixed(2)}</div>
+							<div class="grade-item">Promedio [Electivo, Habilidades, Algebra, Calculo]: ${data.mean.toFixed(2)}</div>
 							<div class="grade-item">Asistencia: ${data.assist}%</div>
 						</div>
 						
@@ -2339,7 +2336,7 @@ fn slots_page() -> RawHtml<&'static str> {
 }
 
 
-//API - Formulario de login para scrapeo con los datos de usuario y contraseña
+//API - Formulario de login para scrapeo con los datos
 #[post("/scrape", data = "<form>")]
 async fn scrape_handler(form: Form<LoginForm>, storage: &State<StudentStorage>) -> Result<Json<serde_json::Value>, rocket::response::status::Custom<String>> {
 	match scrape_ucampus(form.username.clone(), form.password.clone()).await {
@@ -2363,7 +2360,6 @@ async fn scrape_handler(form: Form<LoginForm>, storage: &State<StudentStorage>) 
 #[launch]
 fn rocket() -> _ {
 	let storage: StudentStorage = Arc::new(RwLock::new(HashMap::new()));
-
 	rocket::build()
 		.manage(storage)
 		.mount("/", routes![index, scrape_handler, coinflip_page, leaderboard, get_balance, play_coinflip, shop_page, purchase_item, get_shop_items, slots_page, play_slots])
